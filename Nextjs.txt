@@ -1,0 +1,1118 @@
+==> codevolution Nextjs tutorial <<<<
+
+>>> Getting the id of a clicked product in a dynamic route
+import {useRouter} from next/router
+
+function ProductDetails(){
+const router = useRouter()
+const productId = router.query.productId
+}
+
+Note: the productId is the name of the dynamic folder
+Note: the specific page will always override the dynamic pages
+
+
+
+>>> Scenario for catch all routes application
+Feature 1
+   Concept1
+   Concept2
+   Concept3
+Feature 2
+Feature 3
+Feature 4
+with each of the features having concept links
+
+Application:
+e.g create a folder called docs
+	inside it you create a file [...params].js
+Note: catch all routes will work for any link e.g features1/concept1/review1 etc
+
+To catch all routes in the links--->
+import {useRouter} from 'next/router'
+
+function Doc(){
+consr router = useRouter()
+const {params} = router.query
+//the params in the name given to the catch all routes
+console.log(params)//this will return the array of the routes e.g ['feature1', 'concept1', 'review1']
+
+Note: to create an index or base page in catch all route, you have to double the square bracket eg [[...params]]
+
+
+>>> Link Component Navigation
+import Link from 'next/link'
+
+function Home(){
+return (
+	<Link href='/'>	
+		<a>Home</a>
+	</Link>
+)
+}
+
+Note: if a replace is placed in a link, when a back button is pressed on a browser, it will redirect back to base page not the previous page
+e.g 
+<Link href='/blog' replace>
+	<a>Blog</a>
+</Link>
+
+
+>>>Programmatically Navigating to a route
+e.g redirection after successful payment
+
+import {useRouter} from 'next/router'
+
+function Home(){
+   const router = useRouter()
+   //the router give us access to the push method
+   const handleClick =()=>{
+   	router.push('/product')
+   }
+   return(
+	<button onClick={handleClick}>Place Order</button>
+	)	
+}
+
+
+
+>>> Custom 404 Page
+To create a custom 404 page, all you have to do is create a 404.js file in the pages folder
+
+
+>>> Pre-rendering and Data Fetching section
+	Type of pre-rendering 
+	1. Static Generation (without data, with data, incremental Static Generation, dynamic parameters when fetching data)
+	2. Server Side Rendering(data fetching)
+	--> check Client-side data fetching
+	--> Combining pre-rendering with client-side fetching
+
+	What is pre-rendering? Means nextjs generates HTML for each page in advance instead of having it all done by client-side javascript
+	Why pre-render?
+	1. pre-render improves performance
+	-> In a React app, you need to wait for the javascript to be executed
+	-> Perhaps fetch data from an external API and then render the UI
+	-> There is a wait time for the user
+	-> But with pre-rendered page, the HTML is already generated and loads faster.
+	2. Pre-rendering helps with SEO
+
+
+
+>>>Static generation
+->A method of pre-rendering where the HTML pages are generated at build time.
+->The HTML with all the data that makes up the content of the web page are generated in advance when you build your application.
+Recommended method to pre-render pages whenever possible
+Page can be built once, cached by a CDN and served to the client almost instantly. e.g Blog Pages, e-commerce product pages, documentation and marketing pages
+
+
+>>> Static Generation with getStaticProps
+-> api used in the example is jsonplaceholder.typicode.com
+-> created a users.js file
+	function UserList({users}){
+		return <h1>List of Users</h1>
+	}
+	export default UserList
+
+	//Creating a static generation using the jsonplaceholder api for data
+	export async function getStaticProps(){
+	   const response = await fetch('https://jsonplaceholder.typicode.com/users')
+	   cont data = await response.json()
+	   return {
+		props:{
+		   users:data
+		}
+	   }
+//note: with the return the Userlist function can access the data as props or destructure it {users}
+	}
+
+Note: we can create a components folder at the root page and put our components there
+
+-> Keynotes about getStaticProps
+   1. getStaticProps runs only on the server side, that is the reason we see the console.log output on the terminal instead of browser.
+   i.e The function will never run on the client side
+       The code you write inside getStaticProps wont even be included in the JS bundle that is sent to the browser.
+   2. You can write server-side code directly in getStaticProps, you also dont have to worry about including  API keys in getStaticProps as that wont make it to the browser.
+   3. getStaticProps is allowed only in a page and cannot be run from a regular component file.
+   4. getStaticProps should return an object and object should return a props key which is an object
+   5. getStaticProps will run at build time
+      During development, getStaticProps runs on every request
+
+
+>>> Building a Nextjs Application
+	1. Delete the .next folder(because that is for development)
+	2. npm run build or yarn build
+ 	3. After building an app, you use npm start or yarn start to run it
+
+Note: any link pointing to a page is generated which make a load time faster when navigating to another page
+
+>>> SSG with Dynamic Parameters (Static generation of dynamic data)
+--> list of blog and blog details page
+--> on the details page we will need to use getStaticProps as well but we will be getting the id of the post from the url and will be dynamic and note the details page is a dynamic page e.g [postId].js
+
+function Post({details}){
+	//we can now use the details in the details page
+}
+export default Post
+
+export async getStaticPaths(){
+   return {
+	paths:[
+		{
+			params: {postId: '1'}
+		},
+		{
+			params: {postId: '2'}
+		},
+		{
+			params: {postId: '3'}
+		},
+	],
+	fallback: false,
+}
+}
+
+//doing this the dynamic way where we have large number of data
+
+export async getStaticPaths(){
+//we will fetch all post to get the count of post
+const response = await fetch('https:jsonplaceholder.typicode.com/posts')
+const data = await response.json()
+const paths = data.map(post=>{
+	return {
+		params: {
+		   postId: `${post.id}`
+		}
+	}
+}
+   return {
+	paths:paths,//(or we can use just paths)
+	fallback: false,
+}
+}
+
+export async function getStaticProps(context){
+	const {params} = context //this will contain the id
+	const response = await fetch(`https://jsonplaceholder.typicode.com/posts/${params}`)
+	const data = await response.json()
+	return{
+	   props:{
+		details:data
+	   }
+	}
+}
+
+Note: if you having a link that doesnt require an anchor tag you use passHref eg 
+<Link href='/blog' passHref>
+	<h2>
+	   {post.id}
+	</h2>
+</Link>
+
+Note: getStaticPths is required for dynamic SSG pages
+Note: the fallback keys is compulsory
+	-> fallback option(false, true, blocking)
+--> false: The paths return from getStaticPaths will be rendered to HTML at build time by getStaticProps
+	2. any paths not returned by getStaticPaths will result in 404 page
+--> true: The paths return from getStaticPaths will be rendered to HTML at build time by getStaticProps
+	2. The path that have not been generated at build time will not result in a 404 page. Instead, Next.js will serve a 'fallback' version of the page on the first request to such path.
+	3. In the background, Next.js will statically generate the requested path HTML and JSON. This includes running getStaticProps 
+	4. When that's done, the browser receives the JSON for the generated path. This will be used to automatically render the page with required props. From the user's perspective, the page will be swapped from the fallback page to the full page.
+	5. At the same time, Next.js keeps track of the new list of pre-rendered pages. Subsequent requests to the same path will serve the generated page, just like other pages pre-rendered at build time.
+--> blocking: 1. The paths return from getStaticPaths will be rendered to HTML at build time by getStaticProps.
+2. The paths that haven not been generated at the build time will not result in a 404 page. Instead, on the first request, Nextjs will render the page on the server and return the generated HTML.
+3. When that's done, the browser receives the HTML for the generated path. From the users perspective, it will transition from the browser is requesting to the full page is loaded. There is no flash of loading/fallback state
+4. At the same time, Nextjs keeps track of the new list of pre-rendered pages. Subsequent request to the same path will serve the generated page, just like other pages pre-rendered at build time. 
+
+
+Note: if fallback is set to true, you have to create a loading state for the fallback.
+function Post({post}){
+   const router = useRouter()
+   if(router.isFallback){
+   	return <h1>Loading...</h1>>
+   }
+}
+
+and note if the id or file the user want to access exceed the data id, it will return the 404 page but if id exist but not included in getStaticPaths it will automatically generate the path and display it.
+
+->When to set getStaticPaths fallback:true
+1. if your app has a very large number of static pages that depend on data e.g A large e-commerce site
+->When to set getStaticPaths fallback:blocking
+1. When the user doesnt like the loading state or the code or page doesnt support javascript
+
+=>install json-server
+
+>>>Incremental Static Regeneration(using revalidate) <<<<
+This is used to solve the problem of stale data in static site generation which does not update once build
+How?
+In the getStaticProps function, apart from props key, we can specify a 'revalidate key'. The value for revalidate is the number of seconds after which a page regeneration can occur.
+
+-->example on the product list page:
+export async function getStaticProps(){
+	   const response = await fetch('https://jsonplaceholder.typicode.com/users')
+	   cont data = await response.json()
+	   return {
+		props:{
+		   users:data,
+		},
+		revalidate:10, // this tell next to revalidate this data after every 10sec
+	   }
+
+
+>>> Server Side Rendering <<<<
+ Allows you to pre-render a page not at build time but at request time. HTML is generated for every request
+e.g
+function NewsArticleList({articles}){
+   return <h1>List of News Article</h1>
+   //the article can be used here
+}
+export default NewsArticleList
+
+export async function getServerSideProps(){
+   const response = await fetch('url')
+   const data = await response.json()
+
+   return {
+	props:{
+	   articles:data
+	   }
+	}
+}
+
+Note: to use server side rendering in Nextjs, you need to import an async function called getServerSideProps
+->getServerSideProps runs only on the server side
+->you can write server-side code directly in getServerSideProps
+-> is only allowed in a page not component
+
+>>>getServerSideProps with dynamic data<<<
+
+function ArticleListByCategory({articles, category}){
+//the articles and category are coming from server side
+}
+export default ArticleListByCategory
+
+export async function getServerSideProps(context){
+ const {params} = context
+ const {category}=params
+ const response = await fetch(`http://localhost:4000/news?category=$(category)`)
+ const data = await response.json()
+
+ return {
+	props:{
+	   articles:data,
+	   category,
+	   }
+	}
+}
+
+--> the context props in the getServerSideProps contain req, res (const {params, req, res} = context)
+we can use this to set a cookies or keep user data in cookies
+eg const {params, req, res} = context
+   res.setHeader('Set-Cookies', ['name=Vishwas'])
+   console.log(req.headers.cookie)
+
+-> we also have the query object inside context
+const {params, req, res, query} = context
+the query shows the route parameter
+
+
+>>> Client-Side Data fetching <<<
+This data fetching can be used for pages that doesnt require SEO example User dashboard
+
+import {useState, useEffect} from 'react'
+
+function Dashboard(){
+   const [isLoading, setIsLoading] = useState(true)
+   const [dashboardData, setDashboardData] = useState(null)
+
+   useEffect(()=>{
+	
+	async function fecthDashboardData(){
+	   const response = await fetch('http://localhost:4000/dashboard')
+	   const data = await response.json()
+	   setDashboardData(data)
+	   setIsLoading(false)
+	}
+	fetchDashboardData()
+   }, [])
+
+ if(isLoading){
+	return <h2>Loading...</h2>
+	}
+  return (
+	<div>
+		<h2>Dashboard Data</h2>
+		<h4>{dashboardData.likes}</h4>
+	</div>
+	)
+}
+
+
+>>> SWR (Stale While Revalidate)(swr.vercel.app)<<<
+This was created Nextjs team for data fetching on the client side
+--> install the swr package(yarn add swr/npm i swr)
+
+import useSWR from 'swr'
+
+cont fetcher = async()=>{
+ const response = await fetch('http://localhost:4000/dashboard')
+ return data = await response.json()
+ return data
+}
+function DashboardSWR(){
+	//dashboard is the key
+   const {data, error} = useSWR('dashboard', fetcher)
+
+   if(error) return 'An error occured';
+   if(!data) return 'Loading...'
+   return (
+	<div>
+	   <h2>Dashboard</h2>
+	</div>
+	)
+}
+
+>>Note: SWR fetcher auto update the changes without refresh on the client side
+
+>>>Pre-rendering+client side data fetching<<<
+using ServerSideProps to fetch data and using client side for pagination and filtering
+
+eg getting a list of event and filtering on the client side
+
+import {useState} from react
+
+function EventList({eventList}){
+const [events, setEvents] = useState(eventList)
+const handleSportFilter=async()=>{
+	const response = await fetch(`http://localhost:4000/events?category=sports`)
+ const data = await response.json()
+ setEvents(data)
+}
+ return(
+	<>
+	//This button is used in replace of a search to filter
+	<button onClick={handleSportFilter}>Sport filter</button>
+	   <h1>List of events</h1>
+	   {
+		events.map((event)=>)
+		}
+	</>
+	)
+}
+
+export async function getServerSideProps(){
+ const response = await fetch(`http://localhost:4000/events`)
+ const data = await response.json()
+
+ return {
+	props:{
+	   evenList:data,
+	   }
+	}
+}
+
+>>>Shallow routing will be used to update the url of the page after filtering
+-> this method check on the serverside if there is any filter using query from the context, the serverside is involved because if the page is refresh or the link is bookmarked or sent to another person, so that the other user can get access to the same page
+and on the client side the shallow routing is used
+
+process:
+import {useState} from 'react'
+import {useRouter} from 'next/router'
+
+function EventList({eventList}){
+const [events, setEvents] = useState(eventList)
+const router = useRouter()
+const handleSportFilter=async()=>{
+	const response = await fetch(`http://localhost:4000/events?category=sports`)
+ const data = await response.json()
+ setEvents(data)
+ router.push('/events?category=sports', undefined, {shallow:true})
+}
+
+
+export async function getServerSideProps(context){
+const {query} = context
+const {category} = query
+const queryString = category ? 'category=sports':''
+ const response = await fetch(`http://localhost:4000/events?${queryString}`)
+ const data = await response.json()
+
+ return {
+	props:{
+	   evenList:data,
+	   }
+	}
+}
+
+
+
+>>>API Routes<<<<<
+-> Handle GET requests
+-> Handle POST requests
+-> Dynamic API routes
+-> Handle DELETE requests
+-> Catch all API routes
+
+>>Steps:
+-> Create an api within the pages folder
+-> You can create other api files in the api folder
+
+example:
+//import json file containing 
+--> inside the folder api->comments->index.js
+import {comments} from 'routes to data'
+
+export default function handler(req, res){
+   res.status(200).json(comments)
+}
+
+--> to fetch from the api (GET)
+
+import {useState} from 'react'
+function CommentsPage(){
+const [comments, setComments] = useState([])
+const fetchComments = async()=>{
+ const response = await fetch('/api/comments');
+ const data = await response.json() 
+}
+return(
+<>
+   <button onClick={fetchComments}>Load Comments </button>
+   {
+     comments.map((comment)=>{
+	return(<div></div>)
+     })
+   }
+</>
+)
+}
+
+export default CommentsPage
+
+
+>>> to fetch from the api (POST) <<<
+
+>>Handling POST request on API Route
+export default function handler(req, res){
+   if(req.method === 'GET'){
+      res.status(200).json(comments)
+   }else if(req.method === 'POST'){
+      const comment = req.body.comment
+      const newComment={
+        id: Date.now(),
+        text: comment
+      }
+      comments.push(newComment)
+      res.status(201).json(newComment)
+    }
+   
+}
+
+
+>>Handling POST request on the frontend
+
+import {useState} from 'react'
+function CommentsPage(){
+const [comments, setComments] = useState([])
+const [comment, setComment] = useState('')
+const fetchComments = async()=>{
+ const response = await fetch('/api/comments');
+ const data = await response.json() 
+}
+
+const submitComment = async()=>{
+ const response = await fetch('/api/comments', {
+   method:'POST',
+   body: JSON.stringify({comment}),
+   headers:{
+   	'Content-Type':'application/json'
+   }
+})
+  const data = await response.json();
+}
+return(
+<>
+   <input type='text' value={comment} onChange={(e)=>setComment(e.target.value)}>
+
+   <button onClick={submitComment}>Submit Comment </button>
+   <button onClick={fetchComments}>Load Comments </button>
+   {
+     comments.map((comment)=>{
+	return(<div></div>)
+     })
+   }
+</>
+)
+}
+
+export default CommentsPage
+
+
+>>> Dynamic API Routes <<<
+
+-> to view a single comment from the list of comments using the id we create a dynamic file in the comment folder [commentid].js
+
+-->
+import {comments} from 'comments data path/url'
+export default function handler(req, res){
+   const {commentId} = req.query
+   const comment = comments.find((comment)=> comment.id === parseInt(commentId))
+   res.status(200).json(comment)
+}
+
+
+>>> Handling DELETE Request in Nextjs <<<
+
+-> we will add a delete button to the map on the jsx
+<button onClick={()=>handleDelete(comment.id)}>Delete</button>
+-> create the handleDelete function
+const handleDelete=async (commentId)=>{
+ const response = await fetch(`api/comments.${commentId}`, {method:'DELETE'})
+ const data = await response.json()
+fetchComments() //which retrieve the updated comments
+}
+
+
+-> in the [commentId].js file
+import {comments} from 'comment data route'
+
+export default function handler(req, res){
+   const {commentId} = req.query
+   if(req.method === 'GET'){
+     const comment = comments.find((comment)=> comment.id === parseInt(commentId))
+    res.status(200).json(comment)
+   }else if(req.method === 'DELETE'){
+      const deletedComment = comments.find((comment)=> comment.id === parseInt(commentId))
+      const index = comments.findIndex((comment)=>comment.id ==== parseInt(commentId))
+      comments.splice(index, 1);
+      res.status(200).json(deletedComment)
+   }
+}
+
+>>> Catch all API Routes(uses [...params])
+
+>> Styling in Nextjs
+-> Styling is essential to building any web application
+Global styles
+Component styles
+SASS or SCSS
+CSS-in-JS solution
+
+>>> Global Styles
+-> To use style libraries like bootstrap you npm or yarn install it and you import it in _app.js
+import 'bootstrap/dist/css/bootstrap.min.css'
+
+>>> Component Level Styles
+-> This use Name.module.css for style name
+-> On Name.js file you import styles from '../styles/Name.module.css'
+-> This styles can be accessed by using eg className={styles.container}
+
+>>> SASS Support 
+-> To install sass, yarn add sass
+-> in the styles folder create a _colors.scss
+-> inside it $orange: orange; $blue: blue;
+-> About.module.scss and Contact.module.scss
+-> in About.module.scss, you @import 'colors'
+-> .higlight{ color: $orange }
+
+>>> Using inline styling
+eg. 
+function CSSJS(){
+ return <h2 style={{ color: 'red'}}>Hello World</h2>
+}
+
+-> using styled components
+-> yarn add styled-components
+-> in _app.js
+-> import {ThemeProvider} from 'styled-components'
+-> const theme={
+ colors: {
+     primary: '#355C7D',
+	},
+}
+
+-> Then wrap the MyApp component with provider
+function MyApp({Component, pageProps}){
+ return (
+	<ThemeProvider theme={theme}>
+		<Component {...pageProps}/>
+	</ThemeProvider>
+ )
+}
+
+export default MyApp
+
+-> To the file.js
+import styled from 'styled-components'
+
+const Title = styles.h1`
+ font-size: 50px;
+ color: ${({theme})=> theme.colors.primary};
+`
+
+function CSSJS(){
+ return <Title> Styles Components</Title>
+}
+
+
+
+>>> Miscellaneous Section
+-> App Layout
+-> Head Component
+-> Image Component
+-> Absolute Imports and Module Paths
+-> Static HTML Export 
+-> Configure TypeScript Support
+-> Preview
+-> Next Config File
+-> Redirects
+-> Environment variables
+
+
+>>> App Layout
+-> create a component in teh root folder
+-> create a Header and Footer file in the component folder
+-> import in _app.js and wrap the header and footer around the component
+-> import the styles
+
+---> making some pages not to have the header and footer layout
+example our about.js
+-> About.getLayout = function PageLayout(page){
+ return (
+     <>
+      {page}
+      <Footer/>
+     </>
+   )
+}
+
+-> on the _app.js
+ if(Component.getLayout){
+      return Component.getLayout(<Component {...pageProps}/>)
+ }
+
+
+>>> Head Component in Nextjs
+import Head from 'next/head'
+
+function About(){
+ return (
+   <>
+   <Head>
+	<title>About Codevolution</title>
+	<meta name='description' content='web development tutorial'>
+   </Head>
+   </>
+ )
+}
+
+Note: one head can be done for all pages by puttin it on the _app.js page, but you can still override the _app.js own in the other pages by creating there own head and title
+
+
+>>> Image components
+Having Image in the public folder we want to use Next Image 
+
+import Image from 'next/image'
+
+function PetsPage(){
+   return (
+    <div>
+	{
+         ['1', '2', '3', '4', '5'].map((path)=>{
+           return(
+            <div key={path}>
+               <Image src={`/${path}.jpg`} alt='pet' width='280' height='420'>
+            </div>
+           )
+        })
+        }
+    </div>
+  )
+}
+
+Note: we have an array of five images in the public folder
+
+
+>>> Absolute Imports and Module Paths
+--> create a jsconfig.json in the base path
+--> inside the file
+ {
+  "compilerOptions":{
+    "baseUrl":"."
+  }
+ }
+
+with this we can remove all the ../ in our imports
+
+--> we can do this for other parts too eg components path by adding some other properties
+
+{
+  "compilerOptions":{
+    "baseUrl":".",
+    "paths":{
+  	"@/layout/*":["components/layout/*"]
+    }
+  }
+ }
+
+-> we can edit our component path to 
+eg import Header from '@layout/Footer'
+
+
+>>> Static HTML export
+-> next export: Exports all your pages to a static HTML files that you can serve without the need for Node.js server
+
+steps:
+-> go to package.json
+-> in the script add
+   -> "export":"next build && next export"
+-> in the terminal run yarn export
+limitations: 
+-> You cant use next image for run export
+-> Pages with getServerSideProps cannot be exported
+-> fallback cannot be true, it must be set to false
+
+
+>>> TypeScript support
+steps:
+1. create a a file tsconfig.json in your root directory
+2. install typescript(yarn add --dev typescript @types/react)
+Note: an error will be thrown after the installation which will be because of the absolute path, this is becasue jsconfig isnt in control anymore, tsconfig is in control
+-> to fix that:
+copy the compile options from jsconfig and copy it on tsconfig
+
+
+>>> TypeScript + Data Fetching
+import {GetStaticProps, GetStaticPaths, GetServerSideProps} from 'next'
+
+export cont getStaticProps: GetStaticProps = async()=>{
+
+}
+
+export cont getStaticPaths: GetStaticPaths = async()=>{
+
+}
+
+export cont getServerSideProps: GetServerSideProps = async(context)=>{
+
+}
+
+
+import type {NextApiRequest, NextApiResponse} from 'next'
+
+type Data = {
+ name: string
+}
+
+export default (req: NextApiRequest, res: NextApiResponse<Data>)=>{
+ res.status(200).json({name:'John Doe'})
+}
+
+
+>>> Preview Mode(v62)
+Help applications that rely on a CMS
+
+CMS stands for Content Management System and is a tool that helps users create, manage and modify content on a website without the need for specialized technical knowledge.
+
+
+>>> Reidrects
+How to temporarily redirect a page to another page may be due to maintenance or chnage of route etc
+-> inside next.config.json
+-> module.exports = {
+   reactStrictMode : true,
+   redirects: async() =>{
+      return [
+        {
+	   source: '/about',
+	   destination: '/',
+	   permanent: true
+        }
+     ]
+   }
+ }
+
+
+>>> Environment variables
+Help secure some things eg(SECREY_KEY) that want to keep away from the client side
+-> create in the root folder .env.local
+-> the .env.local may contain things like
+   -> DB_USER = Vishwas
+   -> DB_PASSWORD=Password
+
+-> To access the environment variable
+   eg. const user = process.env.DB_USER
+       const password = process.env.DB_PASSWORD
+
+-> To expose environment variable
+   eg NEXT_PUBLIC_ANALYTICS_ID = 123
+
+-> To access it
+   eg {process.env.NEXT_PUBLIC_ANALYTICS_ID}
+
+>>> Authentication Section
+-> Next-auth library
+-> Authenticating with GitHub
+-> Handle sign in, sign out and securing the application
+-> How to work with a database like MongoDb
+
+>>> Authentication in Nextjs
+-> Client-side authentication
+-> Server-side authentication
+-> API routes authentication
+-> User data
+
+Auth url: next-auth.js.org
+install: yarn add next-auth
+Note: if the project name is the same as next-auth, change the name of the project in the package json
+
+--> api folder
+-> create a auth folder
+-> create a catch all route ([...nextauth].js)
+-> import NextAuth from 'next-auth'
+-> import Providers from 'next-auth/providers'
+
+export default NextAuth({
+   providers:[
+	Provider.GitHub({
+	clientid:process.env.GITHUB_ID,
+	clientSecret:process.env.GITHUB_SECRET
+	})
+   ]
+})
+
+//The clientId and clientSecret are values generated on github app, to get this two details, login to your github account
+-> settings
+-> Developer settings
+-> OAuth Apps
+-> register a new application
+-> Application name: NextAuth
+-> HomePage URl: http://localhost:3000
+-> Authorization callback URL: http://localhost:3000
+Note: all this can be changed, once its created you can see the clientID and you can generate the clientSecrets
+Note: This will be added to the environment variable
+
+
+-> In VsCode create .env.local file in the root
+-> In the file
+   GITHUB_ID = 
+   GITHUB_SECRET =
+
+
+>>> Signing in and Signing out using a button
+
+-> import {signIn, signOut}  from 'next-auth/client'
+
+<Link href='/api/auth/signin'>
+ <a onClick={e =>{
+   e.preventDefault()
+   signIn()
+ }}>Sign in</a>
+</Link>
+
+<Link href='/api/auth/signout'>
+ <a onClick={e =>{
+   e.preventDefault()
+   signOut()
+ }}>Sign out</a>
+</Link>
+
+Note: since we only have github  for authentication we can provide github as parameter to the signIn 
+e.g signIn('github') //this will automatically sign in with the system without requesting for permission or showing github popup
+
+
+>>>Checking if a user is signin or signout
+-> To check if a user in signin or signout we make use of useSession
+-> import {useSession} from 'next-auth/client'
+-> call the component within the hook
+
+function Navbar(){
+const [session, loading] = useSession()
+}
+
+--> if you console.log({session, loading})
+--> output: {session: undefined, loading: true}
+	    {session: null, loading: true}
+	    {session: null, loading: false}
+i.e 
+--> for Signin
+{
+!loading && !session && (
+	<Link href='/api/auth/signin'>
+ <a onClick={e =>{
+   e.preventDefault()
+   signIn()
+ }}>Sign in</a>
+</Link>
+ )
+}
+
+--> for Signout
+{
+session && (
+	<Link href='/api/auth/signout'>
+ <a onClick={e =>{
+   e.preventDefault()
+   signOut()
+ }}>Sign out</a>
+</Link>
+ )
+}
+
+
+
+>>> Securing Pages Client-side
+eg we want to secure the dashboard page
+-> import {getSession, signIn} from 'next-auth/client'
+//getSession return a promise if session exist or empty if there is no session
+-> import {useState, useEffect} from 'react'
+
+function Dashboard(){
+ const [loading, setLoading] = useState(true)
+
+ useEffect(()=>{
+   const securepage = async () =>{
+     const session = await getSession()
+     if(!session){
+	signIn()
+    }else{
+	setLoading(false)
+    }
+   }
+	securePage()
+ }, [])
+
+if(loading){
+ return <h2>Loading...</h2>
+}
+
+return <h1>Dashboard Page</h1>
+}
+
+export default Dashboard
+
+>>> NextAuth Provider_2
+-> spreading a session across all pages in the app and this will give us access to user details in all pages. It uses react-context under the hood
+-> in _app.js
+   -> import {Provider} from 'next-auth/client'
+   -> wrap the component in the provider
+      <Provider>
+	<Navbar/>
+	<Component {...pageProps}/>
+      </Provider>
+
+
+>>> Server Side Authentication
+--> Using the blog as example
+
+import {getSession, useSession} from 'next-auth/client'
+
+function Blog({data}){
+const [session] = useSession()
+ return <h1>Blog page - {data} </h1>
+}
+
+export async function getServerSideProps(context){
+//note on the server side we need to pass in context
+ const session = await getSession(context)
+ return {
+	props:{
+ 	 data: session ? 'List of 100 personalized logs': 'List of free blogs'
+	},
+ }
+}
+
+
+Note: In the client side, we added a transition style because we check for session to prevent the navbar from flicking, but since the session is coming from the serverside, we dont need the styling agagin, we follow this procedure
+-> we need to pass the session  on the server side props
+export async function getServerSideProps(context){
+//note on the server side we need to pass in context
+ const session = await getSession(context)
+ return {
+	props:{
+	 session,
+ 	 data: session ? 'List of 100 personalized logs': 'List of free blogs'
+	},
+ }
+}
+
+-> in _app.js you can pass session in the provider to make it available across all pages
+--> in _app.js
+function MyApp({Component, pageProps}){
+return (
+	<Provider session={pageProps.session}>
+ 	   <Navbar/>
+ 	   <Component {...pageProps}/>
+	</Provider>
+)
+}
+therefore, in the navbar where we remove the styles
+import {signIn, signOut, useSession} from 'next-auth/client'
+--> inside the function
+const [session, loading] = useSession()
+
+--> with the above setup we dont see the flickers in the navbar because it check if the session is there and load the session before the page 
+Note: if you are on homepage and refresh there will still be a flicker, so you need to return the styling 
+
+
+
+>>> Securing pages Server-side
+-> we want to secure some pages and want use to be redirected to signin page if not logged in
+eg if we are to pretect the blog page
+-> in ther getServerSideProps section
+->
+export async function getServerSideProps(context){
+ const session = await getSession(context)
+
+if(!session){
+   return{
+   redirect:{
+     destination: `/api/auth/signin?callbackUrl=http://localhost:3000/blog`
+     permanent: false,
+   },
+ }
+}
+
+ return{
+   props: {
+    session,
+    data: session ?..............
+   }
+ }
+}
+
+//the callbackUrl point to the url the user is trying to access before been redirected
+
+
+>>> Securing API Routes
+
+-> let create a file in the api section (test-session.js)
+
+import {getSession} from 'next-auth/client'
+
+const handler=async(req, res)=>{
+ const session = await getSession({req})
+ if(!session){
+   res.status(401).json(error: 'Unauthenticated user')
+ } else{
+   res.status(200).json({message:'Success', session});
+ }
+}
+
+export default handler
+
+>>> Connecting to the database
+--> using mongodb
+--> yarn add mongodb
+-> add configuration in .env.local file
+-> watch Tutorial 76
+
+
+>>>callbacks (check video 77)
+-> this can be use to add more details to the session data e.g adding id to the use data
+
+>>> Deploying nextjs application with github and vercel
+-> push code to github
+-> go to vercel and signup
+-> import git repository
+-> pick your project
+
+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

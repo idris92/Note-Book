@@ -1,0 +1,477 @@
+>>> Vishwas Gopinath TypeScript(https://learn.codevolution.dev/) <<<<
+
+Note: Watch TypeScript for Beginners(50minute)
+-> create a react app with typescript template
+
+>>> Basic props type
+type GreetProps={
+ name : string
+ messageCount : number
+ isLoggedIn : boolean
+}
+
+export const Greet = (props: GreetProps) =>{
+ return (
+   	<div>
+	   <h2>Welcome {props.name}! You have 10 unread messages</h2>
+	</div>
+  )
+}
+
+
+>>> passing an object as a props
+eg
+const personName = {
+ first: 'Bruce',
+ last: 'Wayne'
+}
+
+return (
+ <div className='App'>
+	<Person name={personName}>
+</div>
+)
+
+--> on Person component
+type PersonProps = {
+	name:{
+		first: string
+		last: string
+	}
+}
+
+export const Person = (props:PersonProps) =>{
+	return <div>{props.name.first} {props.name.last}</div>
+}
+
+>>> Passing an array as props
+const nameList = [
+	{
+		first: 'Bruce',
+		last: 'Wayne'
+	},
+	{
+		first: 'Bruce',
+		last: 'Wayne'
+	},
+	{
+		first: 'Bruce',
+		last: 'Wayne'
+	},
+]
+
+return (
+ <div className='App'>
+	<PersonList name={nameList}>
+</div>
+)
+
+--> namelist props
+type namesListProps={
+	names:{
+		first:string
+		last:string
+	}[]
+	//this is array of object
+}
+
+export const PersonList=(props:namesListProps)=>{
+	return(
+		<div>
+			{
+				props.names.map(()=>())
+			}
+		</div>
+	)
+}
+
+
+
+>>> Advance Props <<<<<
+return (
+	<div>
+		<Status status='success'/>
+		//note status can be success, error etc
+	</div>
+)
+
+--> on the Status component
+type StatusProps ={
+  status: 'success' | 'loading' | 'error'
+  //we are telling type script that status can only be either of this three letters
+}
+
+export const Status = (props: StatusProps)=>{
+	let message
+	if(props.status === 'loading'){
+		message = 'Loading...'
+	}else if(props.status === 'success'){
+		message = 'Data fetched successfully'
+	}else if(props.status === 'error'){
+		message = 'Error fetching data'
+	}
+
+	return (
+		<div>
+			<h2>Status - {message}</h2>
+		</div>
+	)
+}
+
+
+>>> Handling children props <<<
+import Heading from 'component/Heading'
+eg
+return (
+	<Heading> Placeholder Text</Heading>
+)
+
+--> Heading component
+type HeadingProps={
+	children:string
+}
+
+export const Heading=(props:HeadingProps)=>{
+	return <h2>{props.children}</h2>
+}
+
+>> Passing Heading components as a child to another component
+eg
+return (
+	<div>
+		<Oscar>
+			<Heading>Oscar go to school</Heading>
+		</Oscar>
+	</div>
+)
+
+--> Oscar component
+//The question is what is the type of react component(React.ReactNode)
+type OscarProps={
+	children: React.ReactNode
+}
+
+export cont Oscar=(props:OscarProps)=>{
+	<h2>{props.children}</h2>
+}
+
+>>> Optional type(in which the props might not be important)<<<
+eg
+return (
+	<div>
+		<Greet name='idris' messageCount={10} isLoggedIn={false}>
+	</div>
+)
+
+//Let say there is no messageCount and we didnt want to parse 0 we will have to make it oprional on greet component for typescript, this can be done by including ? at the end of the text before column
+
+--> Greet component
+type GreetProps={
+	name: string
+	messageCount?: number
+	isLoggedIn: boolean
+}
+
+export const Greet(props:GreetProps)=>{
+	//we can further set a default value of zero when the messageCount is not passed, by destructuting and setting a default
+	const {messageCount = 0} = props
+	<h2>{messageCount}</h2>
+}
+
+>>> Events props (eg OnClick event and OnChange event)<<<
+
+eg Button component that will receive a click event as a props
+const ButtonProps={
+	handleClick: ()=>void
+}
+
+export const Button=(props:ButtonProps)=>{
+	return <button onClick={props.handleClick}>Click</button>
+}
+
+on App component, call Button component
+<Button handleClick={()=>{console.log('button clicked')}}/>
+
+Note: in cases where there is an event and id
+const ButtonProps={
+	handleClick: (event: React.MouseEvent<HTMLButtonElement>, id:number)=>void
+}
+
+export const Button=(props:ButtonProps)=>{
+	return <button onClick={(event)=>props.handleClick(event, 1)}>Click</button>
+}
+
+on App component, call Button component
+<Button handleClick={(event, id)=>{console.log('button clicked')}}/>
+
+
+>>> OnChange events <<<
+type InputProps={
+	value:string
+	handleChange: (event:React.ChangeEvent<HTMLInputElement>)=>void
+}
+const export Input=(props:InputProps)=>{
+	return <Input type='text' value={props.value} onChange={props.handleChange}/>
+}
+
+on app.tsx(import input components)
+<Input value='name' handleChange={(event)=>console.log(event)}/>
+
+Note: when having the handlechange function in the compoennt itself not as a props, we can do it like this
+const handleChange=(event:React.ChangeEvent<HTMLInputElement>)=>{
+	console.log(event)
+}
+
+>>> Style Props (passing in a style as props) <<<<
+--> container props
+type ContainerProps={
+	styles:React.CSSProperties
+}
+export cont Container =(props:ContainerProps)=>{
+	return(
+		//{border:'1px solid black', padding:'1rem'} replaced
+		<div style={props.styles}>
+			Text content goes here
+		</div>
+	)
+}
+
+in App.js
+ function App(){
+	 return(
+		 <div className='App'>
+	 	<Container styles={{border:'1px solid black', padding:'1rem'}}>
+	 	</div>
+	 ) 
+ }
+ export default App
+
+
+ >>> Prop Types and Tips <<<<
+ --> You can destructure props eg ({value, handleChange}: InputProps)
+ --> Importing types, because there may be a large number of propTypes when working with a large apps
+ eg create a file Container.types.ts
+	-> inside it we can cut the types from the container into it and add export 
+		export type ContainerProps={
+		styles:React.CSSProperties
+	}
+	->to import it into Person component
+	import {ContainerProps} from './Container.types
+
+>>> Re-using types <<<<
+eg
+export type PersonProps={
+	first:string
+	last:string
+}
+-> can be converted to this for reusability
+export type Name={
+	first:string
+	last:string
+}
+
+export type PersonProps={
+	name: Name
+}
+
+-> to use it on another page
+import {Name} from './Person.types'
+
+
+>>> useState Hooks <<<<
+TypeScript uses type inference to detect the type in a react useState hooks
+>>> useState future value <<<
+type AuthUser = {
+	name:string
+	email:string
+}
+
+export const User =()=>{
+	const [user, setuser] = useState(null)
+	const handlelogin =()=>{
+		setuser({
+			name: 'Vishwas',
+			email: 'Vishwas@example.com'
+		})
+
+		//Note typescript will through an error because we set the initial value of the state to be null and we are giving it a object, which will result in an error, so we neeed to tell typescript to accept either a null or an object, and this can be done by
+		>> const [user, setUser] = useState<AuthUser | null>(null)
+	}
+}
+
+>>> UseState type assertion <<<
+This is use to force typescript to accept a type you want, and this can only be done when you are sure of what you are doing --- vid11
+eg 
+const [user, setuser] = useState<AuthUser>({} as AuthUser) //here you are telling type script that the empty object is of type AuthUser
+
+>>> useReducer hooks <<<
+
+import {useReducer} from 'react'
+type CounterState = {
+	count : number
+}
+type CounterAction = {
+	type: string
+	payload : number
+}
+
+cosnt initialState = {count:0}
+function reducer(state: CounterState, action:CounterAction){
+	switch(action.type){
+		case 'increment':
+			return {count: state.count + action.payload}
+		case 'decrement':
+			return {count: state.count - action.payload}
+		default:
+			return state
+	}
+}
+
+export cont Counter =()=>{
+	const [state, dispatch] = useReucer(reducer, initialState)
+	return (
+		<>
+			Count: {state.count}
+			<button onClick={()=>dispatch({type:'increment', payload:10})}>
+				Increment 10
+			</button>
+				<button onClick={()=>dispatch({type:'increment', payload:10})}>
+				Decrement 10
+			</button>
+	)
+}
+
+--> to fix it (this restrict the type to be either increment or decrement)
+type CounterAction = {
+	type: increment | decrement
+	payload : number
+}
+
+--> In a scenario where there is a dispatch that doesnt require a payload, there will be an error but if we make payload optional the increment and decrement will through an error as well, to fix this we need to seperate the type
+eg
+type CounterState = {
+	count : number
+}
+
+type UpdateAction = {
+	type : 'increment' | 'decrement'
+	payload: number
+}
+
+type ResetAction = {
+	type: 'reset'
+}
+
+type CounterAction = UpdateAction | ResetAction
+
+
+>>> useContext Hook <<<<
+
+Trying to use context to share theme to all part of the pages
+-->theme.ts
+export const theme = {
+	primary:{
+		main: '#3f51b5',
+		text: '#fff
+	},
+	secondary:{
+		main: '#f50057',
+		text: '#fff
+	},
+}
+
+--> Box.tsx
+export cont Box =()=>{
+	return <div>theme context</div>
+}
+
+--> ThemeContext.tsx
+import React, {createContext} from 'react'
+import {theme} from './themeComponent'
+
+export const ThemeContext = createContext(theme);
+
+type ThemeContextProviderProps ={
+	children : React.ReactNode
+}
+
+export const ThemeContextProvider = ({children}: ThemeContextProviderProps) =>{
+	<ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>
+
+}
+
+
+--> on App.tsx
+import {ThemeContextProvider} from './component/ThemeContextProvider'
+import {Box} from './component/Box'
+
+function App(){
+	return (
+		<div>
+			<ThemeContextProvider>
+				<Box/>
+			</ThemeContextProvider>
+		</div>
+	)
+}
+
+--> in Box
+
+import {useContext} from 'react'
+import {ThemeContext} from './ThemeContext'
+
+export const Box=()=>{
+	const theme = useContext(ThemeContext);
+	return <div style={{backgroundColor: theme.primary.main, color:theme.secondary.text}}></div>
+
+}
+
+>>>> useReducer strict Action Types <<<<
+//with the above method if I put type:'move', there wont be any error, which is wrong we should look for a way to put a strict input type.
+
+>>> useContext Future Value v15 <<<
+--> create UserContext.tsx
+
+>>> UseRef <<<<
+import {useRef, useEffect} from 'react'
+
+export const DomRef = ()=>{
+	const inputRef = useRef<HTMLInputElement>(null)
+
+	useEffect(()=>{
+		inputRef.current?.focus()
+	}, [])
+
+	return (
+		<div>
+			<input type='text' ref={inputRef}/>
+		</div>
+	)
+}
+
+>>> MutableRef <<<
+import {useState, useRef, useEffect} from 'react'
+export const MutableRef=()=>{
+	const interValRef = useRef<number | null>(null)
+
+	const stopTimer =()=>{
+		if(interValRef.current)
+		window.clearInterval(interValRef.current)
+	}
+
+	useEffect(()=>{
+		interValRef.current = window.setInterval(()=>{
+			setTimer((timer)=>timer+1)
+		}, 1000)
+		return ()=>{
+			stopTimer()
+		}
+	}, [])
+
+	return(
+		<div>
+			HootTimer - {timer} -
+			<button onClick={()=> stopTimner()}>Stop Timer</button>
+		</div>
+	)
+}
